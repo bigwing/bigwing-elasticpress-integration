@@ -84,6 +84,12 @@ add_filter(
 			return $ep_index_prefix;
 		}
 
+		$ep_index_prefix = wp_cache_get( 'ep_index_prefix', 'bigwing-elasticpress' );
+
+		if ( ! empty( $ep_index_prefix ) ) {
+			return strval( $ep_index_prefix );
+		}
+
 		$options = get_option( 'bw_elasticpress' );
 
 		if ( ! isset( $options['ep_index_prefix'] ) ) {
@@ -91,6 +97,8 @@ add_filter(
 
 			update_option( 'bw_elasticpress', $options );
 		}
+
+		wp_cache_set( 'ep_index_prefix', $options['ep_index_prefix'], 'bigwing-elasticpress', DAY_IN_SECONDS );
 
 		return $options['ep_index_prefix'];
 	}
@@ -153,6 +161,7 @@ function ep_autosuggest( \WP_REST_Request $request ): \WP_REST_Response {
 	 */
 	if ( false === $response || ! is_array( $response ) ) {
 		$error = new \WP_Error( 'es_query_error', __( 'There was an unknown error with the Elasticsearch search query.', 'bigwing-elasticpress' ) );
+
 		return new \WP_REST_Response( $error, \WP_Http::IM_A_TEAPOT, $request->get_header( 'ep_search_term' ) );
 	}
 
