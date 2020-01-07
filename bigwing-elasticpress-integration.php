@@ -10,9 +10,27 @@
  * This program derives work from Nicolai's Elasticpress Autosuggest Endpoint plugin:
  * https://github.com/grossherr/elasticpress-autosuggest-endpoint
  *
+ * BigWing ElasticPress Integration plugin for WordPress
+ * Copyright (C) 2020  BigWing
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
  * @package   BigWing\ElasticPress
  * @author    BigWing <https://bigwing.com>
  * @copyright 2020 BigWing
+ * @license   GNU General Public License, version 2 or later
  */
 
 declare( strict_types=1 );
@@ -86,7 +104,7 @@ function ep_autosuggest( \WP_REST_Request $request ): \WP_REST_Response {
 	/**
 	 * The query response, filtered by the plugin.
 	 *
-	 * @see Elasticsearch::query
+	 * @see  Elasticsearch::query
 	 * @uses \BigWing\ElasticPress\filter_query_results
 	 *
 	 * @var array $response
