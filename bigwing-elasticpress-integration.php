@@ -75,6 +75,28 @@ add_action(
 );
 
 /**
+ * Filter the index with a unique prefix for this site.
+ */
+add_filter(
+	'ep_index_prefix',
+	function ( string $ep_index_prefix ): string {
+		if ( ! empty( $ep_index_prefix ) ) {
+			return $ep_index_prefix;
+		}
+
+		$options = get_option( 'bw_elasticpress' );
+
+		if ( ! isset( $options['ep_index_prefix'] ) ) {
+			$options['ep_index_prefix'] = wp_generate_uuid4();
+
+			update_option( 'bw_elasticpress', $options );
+		}
+
+		return $options['ep_index_prefix'];
+	}
+);
+
+/**
  * Filter the ElasticPress Autosuggest options passed to the JS 'epas' object.
  */
 add_filter(
