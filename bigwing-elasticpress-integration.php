@@ -75,6 +75,36 @@ add_action(
 );
 
 /**
+ * Filter the index with a unique prefix for this site.
+ */
+add_filter(
+	'ep_index_prefix',
+	function ( string $ep_index_prefix ): string {
+		if ( ! empty( $ep_index_prefix ) ) {
+			return $ep_index_prefix;
+		}
+
+		$ep_index_prefix = wp_cache_get( 'ep_index_prefix', 'bigwing-elasticpress' );
+
+		if ( ! empty( $ep_index_prefix ) ) {
+			return strval( $ep_index_prefix );
+		}
+
+		$options = get_option( 'bw_elasticpress' );
+
+		if ( ! isset( $options['ep_index_prefix'] ) ) {
+			$options['ep_index_prefix'] = wp_generate_uuid4();
+
+			update_option( 'bw_elasticpress', $options );
+		}
+
+		wp_cache_set( 'ep_index_prefix', $options['ep_index_prefix'], 'bigwing-elasticpress', DAY_IN_SECONDS );
+
+		return $options['ep_index_prefix'];
+	}
+);
+
+/**
  * Filter the ElasticPress Autosuggest options passed to the JS 'epas' object.
  */
 add_filter(
@@ -102,12 +132,12 @@ function ep_autosuggest( \WP_REST_Request $request ): \WP_REST_Response {
 	add_filter( 'ep_es_query_results', __NAMESPACE__ . '\filter_query_results', 10, 2 );
 
 	/**
-	 * The query response, filtered by the plugin.
+	 * The query response, filtered by the plugin. False if there's an error.
 	 *
 	 * @see  Elasticsearch::query
 	 * @uses \BigWing\ElasticPress\filter_query_results
 	 *
-	 * @var array $response
+	 * @var bool|array $response
 	 */
 	$response = Elasticsearch::factory()->query(
 		get_posts_index_name(),
@@ -122,7 +152,20 @@ function ep_autosuggest( \WP_REST_Request $request ): \WP_REST_Response {
 	// Disable the filter from being run outside of our requests.
 	remove_filter( 'ep_es_query_results', __NAMESPACE__ . '\filter_query_results' );
 
-	return rest_ensure_response( $response );
+	/*
+	 * If the query fails, then generate a response that avoids breaking the script.
+	 * rest_ensure_response() will return 'false' right back, but that throws an error in the JS, which expects certain
+	 * properties in the response. Generating an error and using a valid-but-not-200 (which is the default code) lets
+	 * us safely let someone know that there was a problem without throwing script errors that may block other search
+	 * functionality.
+	 */
+	if ( false === $response || ! is_array( $response ) ) {
+		$error = new \WP_Error( 'es_query_error', __( 'There was an unknown error with the Elasticsearch search query.', 'bigwing-elasticpress' ) );
+
+		return new \WP_REST_Response( $error, \WP_Http::IM_A_TEAPOT, $request->get_header( 'ep_search_term' ) );
+	}
+
+	return new \WP_REST_Response( $response );
 }
 
 /**
